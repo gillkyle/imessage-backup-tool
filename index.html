@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="sqlite file viewer" />
+    <meta name="keywords" content="sqlite,viewer,db,database,online" />
+    <meta name="author" content="Juraj Novák" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQLite Viewer</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/select2.min.css" rel="stylesheet" />
+    <link href="css/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="css/main.css" rel="stylesheet" />
+    <link rel="image_src" href="img/icon.png" />
+    <link rel="icon" type="image/png" href="img/icon.png" />
+    <meta property="og:url" content="https://inloop.github.io/sqlite-viewer/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SQLite Viewer" />
+    <meta property="og:description" content="sqlite file viewer" />
+    <meta
+      property="og:image"
+      content="https://inloop.github.io/sqlite-viewer/img/icon.png"
+    />
+  </head>
+  <body>
+    <img src="img/icon.png" style="display: none" />
+
+    <div
+      id="main-container"
+      class="container rounded-xl mt-4 bg-white items-center justify-center"
+    >
+      <header id="header" class="row align-items-center p-4">
+        <img
+          src="img/logo.svg"
+          width="54"
+          height="54"
+          class="col-auto p-0"
+          alt="Database logo"
+        />
+
+        <div class="col">
+          <h4 class="mb-0 text-blue-700">iMessage Backup Exporter</h4>
+          <p class="mb-0">
+            Convert the Apple messages backup into something human readable
+          </p>
+        </div>
+      </header>
+
+      <div
+        id="compat-error"
+        class="alert alert-danger row rounded-0 d-none"
+        role="alert"
+      >
+        Sorry but your browser does not support some of new HTML5 features! Try
+        using latest version of Google Chrome or Firefox.
+      </div>
+
+      <div
+        class="row text-center p-3 align-items-stretch"
+        id="dropzone"
+        onclick="dropzoneClick(this)"
+      >
+        <div
+          class="d-flex border-2 border-dashed rounded-1 align-items-center justify-content-center"
+        >
+          <div id="drop-text">
+            <b>Drop a backup SQLite file here</b> to load content for conversion
+            or previewing. Or click on this box to open a file explorer.<br />
+            <div class="nouploadinfo small mt-3">
+              No file will be uploaded anywhere - everything runs on your
+              computer privately.
+            </div>
+          </div>
+          <div id="drop-loading" class="d-flex align-items-center d-none">
+            <div class="spinner-border me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <b>Processing file...</b>
+          </div>
+        </div>
+      </div>
+
+      <div id="output-box" class="container-fluid">
+        <div class="input-group">
+          <!-- <select id="tables" class="form-select" title="Table"></select> -->
+
+          <div class="dropdown ms-2 flex w-full">
+            <button
+              class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 w-full"
+              type="button"
+              onclick="exportAllToCsv()"
+            >
+              <!-- id="dropdownMenu1"
+              data-bs-toggle="dropdown"
+              aria-expanded="false" -->
+              Export Messages to CSV
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+              <li>
+                <a class="dropdown-item" href="#" onclick="exportAllToCsv()"
+                  >All tables to CSV</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  onclick="exportSelectedTableToCsv()"
+                  >Selected table to CSV</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  onclick="exportQueryTableToCsv()"
+                  >Query table to CSV</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="d-flex mt-3 mb-3">
+          <div
+            id="sql-editor"
+            class="form-control form-control-lg col me-2"
+          ></div>
+          <button
+            class="rounded-md bg-neutral-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-600"
+            id="sql-run"
+            type="submit"
+            onclick="executeSql(this)"
+          >
+            Execute
+          </button>
+        </div>
+
+        <div class="alert alert-danger" id="error" style="display: none"></div>
+        <div class="alert alert-info" id="info" style="display: none"></div>
+
+        <div class="row pb-4">
+          <div class="overflow-x-auto">
+            <table
+              id="data"
+              class="table table-sm table-bordered table-hover table-striped"
+            >
+              <thead>
+                <tr></tr>
+              </thead>
+              <tbody class="table-group-divider"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="instruction" class="my-8 items-center flex justify-center">
+      <!-- make instructions using tailwind typography that outline the steps of backing up your iphone to get a backup file, uploading it here and hitting the export button -->
+      <div class="prose max-w-2xl">
+        <h2>Instructions</h2>
+        <p>
+          To use this tool, you first need to access a SQLite file that iPhones
+          use to store Messages from the native iOS Messages app. You will need
+          to backup your iPhone using iTunes (on Windows or Mac) or you can find
+          the file on your Mac if you have connected your iPhone to your Mac and
+          have the "Messages in iCloud" feature turned on.
+        </p>
+        <h3>Step 1: Get the Messages backup file</h3>
+        <p>
+          Connect your iPhone to your Mac or PC and open iTunes. Click on your
+          device and "Back Up Now". This will create a backup of your iPhone on
+          your computer.
+        </p>
+        <p>
+          You can skip this step if you have connected your phone to a Mac and
+          can find the file here: ~/Library/Messages/chat.db
+        </p>
+        <h3>Step 2: Find the backup file</h3>
+        <p>The created backup file is usually located here:</p>
+        <ul>
+          <li>
+            <b>Windows:</b> C:\Users[USERNAME]\AppData\Roaming\Apple
+            Computer\MobileSync\Backup\3d\3d0d7e5fb2ce288813306e4d4636395e047a3d28
+          </li>
+          <li>
+            <b>Mac:</b> ~/Library/Application
+            Support/MobileSync/Backup/3d/3d0d7e5fb2ce288813306e4d4636395e047a3d28
+          </li>
+        </ul>
+        <h3>Step 3: Upload the backup file</h3>
+        <p>
+          Once you have the backup file, you can upload it here by dragging and
+          dropping it into the box above or by clicking on the box and selecting
+          the file from your computer.
+        </p>
+        <h3>Step 4: Export the messages</h3>
+        <p>
+          Once the file is uploaded, you can hit the export button to get a
+          human readable version of your messages from the 3 important tables
+          that are stored in the message database.
+        </p>
+        <h3>Considerations</h3>
+        <p>
+          The CSV file format is nice and human readable, but sometimes less
+          flexible for actually searching and viewing messages the same way they
+          are read on your phone. For that reason, it's recommended that you
+          still keep and store the original SQLite file which you uploaded for
+          redundancy and future use. The SQLite file is not included in the
+          export to keep the file size smaller.
+        </p>
+      </div>
+    </div>
+    <div
+      id="bottom-bar"
+      class="d-flex position-sticky justify-content-center bottom-0 pb-4 d-none pe-none"
+    >
+      <div class="row bg-white border border-dark shadow p-3 rounded-2 pe-auto">
+        <button
+          class="btn btn-outline-secondary btn-sm lh-1 col-auto"
+          id="page-prev"
+          type="submit"
+          onclick="setPage(this, false)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="bi bi-caret-left-fill"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"
+            />
+          </svg>
+        </button>
+        <a
+          href="javascript:void(0)"
+          data-bs-toggle="tooltip"
+          class="text-decoration-none col-auto"
+          onclick="setPage(this)"
+          id="pager"
+        ></a>
+        <button
+          class="btn btn-outline-secondary btn-sm lh-1 col-auto"
+          id="page-next"
+          type="submit"
+          onclick="setPage(this, true)"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="bi bi-caret-right-fill"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <footer class="col text-center text-secondary py-2 my-1 small" id="footer">
+      <a href="https://yuraj11.github.io" class="text-decoration-none"
+        >&copy; 2024 Kyle Gill</a
+      ><br />
+      <small
+        >|
+        <a
+          href="https://github.com/inloop/sqlite-viewer"
+          class="text-decoration-none link-opacity-75"
+          >Fork me on GitHub</a
+        >
+        |</small
+      >
+    </footer>
+
+    <input type="file" id="dropzone-dialog" style="opacity: 0; display: none" />
+
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="js/filereader.js"></script>
+    <script src="js/sql-wasm.js?v=1100"></script>
+    <script src="js/select2.min.js?v=4013"></script>
+    <script src="js/ace/ace.js?v=1323"></script>
+    <script src="js/bootstrap.bundle.min.js?v=532"></script>
+    <script src="js/mindmup-editabletable.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/FileSaver.min.js"></script>
+    <script src="js/main.js?v=17"></script>
+  </body>
+</html>
