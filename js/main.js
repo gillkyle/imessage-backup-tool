@@ -535,12 +535,17 @@ function exportCsvTable(tableName) {
 
 // Modification in exportAllToCsv to handle Blob array
 function exportAllToCsv() {
+  const processingMessage = $("#processing-message");
   const confirmation = confirm(
     "You are about to process all the files in the backup and convert them into a a series of CSV files stored in a compressed zip file. This could take a minute or two, are you sure you want to continue?"
   );
   if (!confirmation) {
+    processingMessage.hide();
     return;
+  } else {
+    processingMessage.show();
   }
+  //   change the text of the export button to "Exporting..."
   console.info("Starting export of files to CSV zip...");
   setIsLoading(true);
   const zip = new JSZip();
@@ -566,8 +571,9 @@ function exportAllToCsv() {
   }
 
   zip.generateAsync({ type: "blob" }).then(function (content) {
-    saveAs(content, "exported_all_db.zip");
+    saveAs(content, "exported_messages.zip");
   });
+  processingMessage.hide();
   setIsLoading(false);
 }
 
@@ -595,10 +601,7 @@ function exportQueryTableToCsv() {
     const blob = new Blob([arrayToCsv(exportedRows)], {
       type: "text/plain;charset=utf-8",
     });
-    saveAs(
-      blob,
-      "exported_" + getTableNameFromQuery(query).toLowerCase() + "_db.csv"
-    );
+    saveAs(blob, "exported_messages.csv");
   }
 
   setIsLoading(false);

@@ -6,7 +6,7 @@
     <meta name="keywords" content="sqlite,viewer,db,database,online" />
     <meta name="author" content="Juraj Novák" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SQLite Viewer</title>
+    <title>iMessage Backup Tool</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link href="css/bootstrap.min.css" rel="stylesheet" />
     <link href="css/select2.min.css" rel="stylesheet" />
@@ -16,7 +16,7 @@
     <link rel="icon" type="image/png" href="img/icon.png" />
     <meta property="og:url" content="https://inloop.github.io/sqlite-viewer/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="SQLite Viewer" />
+    <meta property="og:title" content="iMessage Backup Tool" />
     <meta property="og:description" content="sqlite file viewer" />
     <meta
       property="og:image"
@@ -87,6 +87,7 @@
 
           <div class="dropdown ms-2 flex w-full">
             <button
+              id="export-button"
               class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 w-full"
               type="button"
               onclick="exportAllToCsv()"
@@ -121,7 +122,9 @@
             </ul>
           </div>
         </div>
-
+        <div id="processing-message" class="text-red-600 hidden">
+          Processing...
+        </div>
         <div class="d-flex mt-3 mb-3">
           <div
             id="sql-editor"
